@@ -39,6 +39,8 @@ export default function Index() {
                     messages={messages}
                     onSendMessage={handleSendMessage}
                     currentModel={currentModel}
+                    isSidebarOpen={isSidebarOpen}
+                    onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
                 />
             </main>
         </div>

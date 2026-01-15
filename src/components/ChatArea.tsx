@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ModelType, Message } from '@/types/ai';
-import { Send, User, Sparkles, Copy, ThumbsUp, RotateCcw } from 'lucide-react';
+import { Send, User, Sparkles, Copy, ThumbsUp, RotateCcw, PanelLeft } from 'lucide-react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { cn } from '@/lib/utils';
@@ -9,9 +9,11 @@ interface ChatAreaProps {
     messages: Message[];
     onSendMessage: (text: string) => void;
     currentModel: ModelType;
+    isSidebarOpen: boolean;
+    onToggleSidebar: () => void;
 }
 
-export function ChatArea({ messages, onSendMessage, currentModel }: ChatAreaProps) {
+export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen, onToggleSidebar }: ChatAreaProps) {
     const [input, setInput] = useState('');
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -40,6 +42,11 @@ export function ChatArea({ messages, onSendMessage, currentModel }: ChatAreaProp
             {/* Header Info */}
             <header className="h-14 border-b border-zinc-800 flex items-center px-6 justify-between glass z-10">
                 <div className="flex items-center gap-2">
+                    {!isSidebarOpen && (
+                        <Button variant="ghost" size="icon" onClick={onToggleSidebar} className="text-zinc-400 mr-2">
+                            <PanelLeft className="w-5 h-5" />
+                        </Button>
+                    )}
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-sm font-medium text-zinc-300 uppercase tracking-widest">
                         Active Model: <span className="text-white">{currentModel.replace('-', ' ').toUpperCase()}</span>
