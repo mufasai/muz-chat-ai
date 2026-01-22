@@ -17,6 +17,17 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
     const [input, setInput] = useState('');
     const scrollRef = useRef<HTMLDivElement>(null);
 
+    // Helper untuk format nama model
+    const getModelDisplayName = (model: ModelType): string => {
+        const modelMap: Record<ModelType, string> = {
+            'z-ai/glm-4.5-air:free': 'GLM 4.5 AIR',
+            'deepseek/deepseek-r1-0528:free': 'DEEPSEEK R1',
+            'tngtech/tng-r1t-chimera:free': 'TNG R1T CHIMERA',
+            'deepseek/deepseek-chat': 'DEEPSEEK CHAT'
+        };
+        return modelMap[model] || model.toUpperCase();
+    };
+
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -49,7 +60,7 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                     )}
                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <span className="text-sm font-medium text-zinc-300 uppercase tracking-widest">
-                        Active Model: <span className="text-white">{currentModel.replace('-', ' ').toUpperCase()}</span>
+                        Active Model: <span className="text-white">{getModelDisplayName(currentModel)}</span>
                     </span>
                 </div>
             </header>
@@ -61,11 +72,11 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
             >
                 {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-                        <img
+                        {/* <img
                             // src="https://mgx-backend-cdn.metadl.com/generate/images/868536/2025-12-27/fb449132-f449-4d3b-8752-a526057b68f9.png"
                             alt="Logo"
                             className="w-20 h-20 grayscale"
-                        />
+                        /> */}
                         <h2 className="text-2xl font-bold">Apa yang bisa saya bantu hari ini?</h2>
                         <p className="max-w-md text-zinc-400">
                             Pilih model di sidebar dan mulai percakapan. Saya bisa membantu menulis kode, merangkum teks, atau menjawab pertanyaan apapun.
@@ -119,7 +130,7 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                 >
                     <div className="relative glass rounded-2xl border-zinc-700 focus-within:border-blue-500/50 transition-all shadow-2xl overflow-hidden">
                         <Textarea
-                            placeholder={`Ketik pesan untuk ${currentModel.toUpperCase()}...`}
+                            placeholder={`Ketik pesan untuk ${getModelDisplayName(currentModel)}...`}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
