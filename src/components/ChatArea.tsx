@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ModelType, Message } from '@/types/ai';
-import { Send, User, Sparkles, Copy, ThumbsUp, RotateCcw, PanelLeft } from 'lucide-react';
+import { Send, User, Sparkles, Copy, ThumbsUp, RotateCcw, PanelLeft, Image as ImageIcon, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { cn } from '@/lib/utils';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChatAreaProps {
     messages: Message[];
-    onSendMessage: (text: string) => void;
+    onSendMessage: (text: string, imageBase64?: string) => void;
     currentModel: ModelType;
     isSidebarOpen: boolean;
     onToggleSidebar: () => void;
@@ -15,7 +17,9 @@ interface ChatAreaProps {
 
 export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen, onToggleSidebar }: ChatAreaProps) {
     const [input, setInput] = useState('');
+    const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Helper untuk format nama model
     const getModelDisplayName = (model: ModelType): string => {
@@ -23,10 +27,16 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
             'z-ai/glm-4.5-air:free': 'GLM 4.5 AIR',
             'deepseek/deepseek-r1-0528:free': 'DEEPSEEK R1',
             'tngtech/tng-r1t-chimera:free': 'TNG R1T CHIMERA',
-            'deepseek/deepseek-chat': 'DEEPSEEK CHAT'
+            'deepseek/deepseek-chat': 'DEEPSEEK CHAT',
+            'qwen/qwen-2.5-vl-7b-instruct:free': 'QWEN 2.5 VL (VISION)',
+            'openai/gpt-4o-mini': 'GPT-4O MINI (VISION)'
         };
         return modelMap[model] || model.toUpperCase();
     };
+
+    // Check if current model supports vision
+    const isVisionModel = currentModel === 'qwen/qwen-2.5-vl-7b-instruct:free' ||
+        currentModel === 'openai/gpt-4o-mini';
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -36,9 +46,71 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim()) return;
-        onSendMessage(input);
+        if (!input.trim() && !selectedImage) return;
+        onSendMessage(input, selectedImage || undefined);
         setInput('');
+        setSelectedImage(null);
+    };
+
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Check if it's an image
+        if (!file.type.startsWith('image/')) {
+            alert('Please select an image file');
+            return;
+        }
+
+        // Check file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('Image size should be less than 5MB');
+            return;
+        }
+
+        // Convert to base64 with compression
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const img = new Image();
+            img.onload = () => {
+                // Create canvas for compression
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+
+                // Calculate new dimensions (max 1024px)
+                let width = img.width;
+                let height = img.height;
+                const maxSize = 1024;
+
+                if (width > maxSize || height > maxSize) {
+                    if (width > height) {
+                        height = (height / width) * maxSize;
+                        width = maxSize;
+                    } else {
+                        width = (width / height) * maxSize;
+                        height = maxSize;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+
+                // Draw and compress
+                ctx?.drawImage(img, 0, 0, width, height);
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
+
+                setSelectedImage(compressedBase64);
+            };
+            img.src = reader.result as string;
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const removeImage = () => {
+        setSelectedImage(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -107,7 +179,26 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                                         ? "bg-blue-600/10 border-blue-600/20 text-zinc-100"
                                         : "bg-zinc-900/50 border-zinc-800 text-zinc-300"
                                 )}>
-                                    {msg.content}
+                                    {msg.imageUrl && (
+                                        <img
+                                            src={msg.imageUrl}
+                                            alt="Uploaded"
+                                            className="max-w-xs rounded-lg mb-2"
+                                        />
+                                    )}
+                                    {msg.role === 'assistant' ? (
+                                        <div className="prose prose-invert prose-sm max-w-none prose-pre:bg-zinc-800 prose-pre:border prose-pre:border-zinc-700 prose-code:text-emerald-400 prose-code:bg-zinc-800/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-headings:text-zinc-100 prose-p:text-zinc-300 prose-strong:text-zinc-100 prose-ul:text-zinc-300 prose-ol:text-zinc-300 prose-li:text-zinc-300">
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                {typeof msg.content === 'string' ? msg.content :
+                                                    msg.content.find(c => c.type === 'text')?.text || ''}
+                                            </ReactMarkdown>
+                                        </div>
+                                    ) : (
+                                        <span>
+                                            {typeof msg.content === 'string' ? msg.content :
+                                                msg.content.find(c => c.type === 'text')?.text || ''}
+                                        </span>
+                                    )}
                                 </div>
                                 {msg.role === 'assistant' && (
                                     <div className="flex items-center gap-4 px-1">
@@ -128,6 +219,24 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                     onSubmit={handleSubmit}
                     className="max-w-4xl mx-auto relative group"
                 >
+                    {/* Image Preview */}
+                    {selectedImage && (
+                        <div className="mb-3 relative inline-block">
+                            <img
+                                src={selectedImage}
+                                alt="Preview"
+                                className="max-w-xs max-h-40 rounded-lg border border-zinc-700"
+                            />
+                            <button
+                                type="button"
+                                onClick={removeImage}
+                                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    )}
+
                     <div className="relative glass rounded-2xl border-zinc-700 focus-within:border-blue-500/50 transition-all shadow-2xl overflow-hidden">
                         <Textarea
                             placeholder={`Ketik pesan untuk ${getModelDisplayName(currentModel)}...`}
@@ -138,12 +247,35 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                         />
                         <div className="flex items-center justify-between px-4 pb-3">
                             <div className="flex items-center gap-2">
+                                {isVisionModel && (
+                                    <>
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleImageSelect}
+                                            className="hidden"
+                                            id="image-upload"
+                                        />
+                                        <label htmlFor="image-upload">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-zinc-500 hover:text-zinc-300"
+                                                onClick={() => fileInputRef.current?.click()}
+                                            >
+                                                <ImageIcon className="w-5 h-5" />
+                                            </Button>
+                                        </label>
+                                    </>
+                                )}
                                 <span className="text-[10px] text-zinc-600 font-mono">SHIFT + ENTER UNTUK BARIS BARU</span>
                             </div>
                             <Button
                                 type="submit"
                                 size="icon"
-                                disabled={!input.trim()}
+                                disabled={!input.trim() && !selectedImage}
                                 className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-900/20"
                             >
                                 <Send className="w-4 h-4" />

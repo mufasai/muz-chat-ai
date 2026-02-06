@@ -1,13 +1,15 @@
+import { useState } from 'react';
 import type { ModelType } from '@/types/ai';
 import {
     Bot,
     Cpu,
     Sparkles,
     Zap,
-    MessageSquare,
     Plus,
     Settings,
-    PanelLeftClose
+    PanelLeftClose,
+    ChevronDown,
+    ChevronUp
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
@@ -23,10 +25,17 @@ const models = [
     { id: 'z-ai/glm-4.5-air:free', name: 'GLM 4.5 Air', icon: Sparkles, color: 'text-purple-500', desc: 'Free - Lightweight' },
     { id: 'deepseek/deepseek-r1-0528:free', name: 'DeepSeek R1', icon: Cpu, color: 'text-blue-500', desc: 'Free - Reasoning' },
     { id: 'tngtech/tng-r1t-chimera:free', name: 'TNG R1T Chimera', icon: Zap, color: 'text-yellow-500', desc: 'Free - Creative' },
-    { id: 'deepseek/deepseek-chat', name: 'DeepSeek Chat', icon: Bot, color: 'text-cyan-500', desc: 'Fast Chat' },
+    { id: 'deepseek/deepseek-chat', name: 'DeepSeek Chat', icon: Bot, color: 'text-cyan-500', desc: 'Fast & Stable' },
+    { id: 'qwen/qwen-2.5-vl-7b-instruct:free', name: 'Qwen 2.5 VL', icon: Sparkles, color: 'text-emerald-500', desc: 'Free - Vision 👁️ (Slow)' },
+    { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', icon: Sparkles, color: 'text-indigo-500', desc: 'Paid - Vision 👁️ (Fast)' },
 ] as const;
 
 export function Sidebar({ currentModel, onModelChange, isOpen, onToggle }: SidebarProps) {
+    const [showAllModels, setShowAllModels] = useState(false);
+
+    // Show only first 3 models by default
+    const visibleModels = showAllModels ? models : models.slice(0, 3);
+
     return (
         <aside className={cn(
             "h-full border-r border-zinc-800 bg-zinc-900 flex flex-col transition-all duration-300",
@@ -55,7 +64,7 @@ export function Sidebar({ currentModel, onModelChange, isOpen, onToggle }: Sideb
                 <div>
                     <p className="px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Pilih Model AI</p>
                     <div className="space-y-1">
-                        {models.map((model) => (
+                        {visibleModels.map((model) => (
                             <button
                                 key={model.id}
                                 onClick={() => onModelChange(model.id as ModelType)}
@@ -73,6 +82,26 @@ export function Sidebar({ currentModel, onModelChange, isOpen, onToggle }: Sideb
                                 </div>
                             </button>
                         ))}
+
+                        {/* Show More / Show Less Button */}
+                        {models.length > 3 && (
+                            <button
+                                onClick={() => setShowAllModels(!showAllModels)}
+                                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 rounded-lg transition-all mt-2"
+                            >
+                                {showAllModels ? (
+                                    <>
+                                        <ChevronUp className="w-4 h-4" />
+                                        Tampilkan Lebih Sedikit
+                                    </>
+                                ) : (
+                                    <>
+                                        <ChevronDown className="w-4 h-4" />
+                                        Tampilkan {models.length - 3} Model Lainnya
+                                    </>
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
 
