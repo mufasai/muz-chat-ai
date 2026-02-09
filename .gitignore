@@ -15,11 +15,9 @@ dist-ssr
 # environment variables
 .env
 .env.local
-.env.example
 
-# Server
-server/node_modules
-server/.env
+# Server folder (separate repo)
+server/
 
 # Editor directories and files
 .vscode/*
