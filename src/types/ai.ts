@@ -14,6 +14,18 @@ export interface MessageContent {
     };
 }
 
+export interface CodePreviewData {
+    html: string;
+    css?: string;
+    js?: string;
+}
+
+export interface PdfData {
+    text: string;
+    pages: number;
+    fileName: string;
+}
+
 export interface Message {
     id: number;
     role: 'user' | 'assistant';
@@ -21,4 +33,6 @@ export interface Message {
     model?: ModelType;
     timestamp: Date;
     imageUrl?: string; // For display purposes
+    pdfData?: PdfData; // For PDF attachments
+    codePreview?: CodePreviewData; // For inline code preview
 }

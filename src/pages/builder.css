@@ -1,0 +1,59 @@
+/* Override Sandpack styles for full height preview */
+.sandpack-container {
+    height: 100%;
+    width: 100%;
+}
+
+.sandpack-container .sp-wrapper {
+    height: 100% !important;
+}
+
+.sandpack-container .sp-layout {
+    height: 100% !important;
+    display: flex !important;
+}
+
+.sandpack-container .sp-stack {
+    height: 100% !important;
+    flex: 1 !important;
+}
+
+.sandpack-container .sp-preview-container {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.sandpack-container .sp-preview-iframe {
+    height: 100% !important;
+    flex: 1 !important;
+    border: none !important;
+}
+
+/* Make preview take full available space */
+.sandpack-container .sp-preview {
+    height: 100% !important;
+    min-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Ensure code editor also takes full height */
+.sandpack-container .sp-code-editor {
+    height: 100% !important;
+}
+
+/* Fix preview actions bar */
+.sandpack-container .sp-preview-actions {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #151515;
+    border-bottom: 1px solid #2d2d2d;
+}
+
+/* Make sure the iframe content is scrollable */
+.sandpack-container iframe {
+    width: 100% !important;
+    height: 100% !important;
+}

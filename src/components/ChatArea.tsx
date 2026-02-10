@@ -1,15 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ModelType, Message } from '@/types/ai';
-import { Send, User, Sparkles, Copy, ThumbsUp, RotateCcw, PanelLeft, Image as ImageIcon, X } from 'lucide-react';
+import { Send, User, Sparkles, Copy, ThumbsUp, RotateCcw, PanelLeft, Image as ImageIcon, X, FileText } from 'lucide-react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { CodePreview } from './CodePreview';
 
 interface ChatAreaProps {
     messages: Message[];
-    onSendMessage: (text: string, imageBase64?: string) => void;
+    onSendMessage: (text: string, imageBase64?: string, pdfBase64?: string, pdfFileName?: string) => void;
     currentModel: ModelType;
     isSidebarOpen: boolean;
     onToggleSidebar: () => void;
@@ -18,8 +19,10 @@ interface ChatAreaProps {
 export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen, onToggleSidebar }: ChatAreaProps) {
     const [input, setInput] = useState('');
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
+    const [selectedPdf, setSelectedPdf] = useState<{ base64: string; name: string } | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const pdfInputRef = useRef<HTMLInputElement>(null);
 
     // Helper untuk format nama model
     const getModelDisplayName = (model: ModelType): string => {
@@ -46,10 +49,36 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!input.trim() && !selectedImage) return;
-        onSendMessage(input, selectedImage || undefined);
+        if (!input.trim() && !selectedImage && !selectedPdf) return;
+        onSendMessage(input, selectedImage || undefined, selectedPdf?.base64, selectedPdf?.name);
         setInput('');
         setSelectedImage(null);
+        setSelectedPdf(null);
+    };
+
+    const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+        // Get pasted data
+        const pastedText = e.clipboardData.getData('text/plain');
+
+        // If pasted text has line breaks, preserve them
+        if (pastedText.includes('\n') || pastedText.includes('\r')) {
+            e.preventDefault();
+
+            // Get current cursor position
+            const textarea = e.currentTarget;
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+
+            // Insert pasted text at cursor position
+            const newValue = input.substring(0, start) + pastedText + input.substring(end);
+            setInput(newValue);
+
+            // Set cursor position after pasted text
+            setTimeout(() => {
+                textarea.selectionStart = textarea.selectionEnd = start + pastedText.length;
+            }, 0);
+        }
+        // Otherwise, let default paste behavior work
     };
 
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,6 +139,40 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
         setSelectedImage(null);
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
+        }
+    };
+
+    const handlePdfSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Check if it's a PDF
+        if (file.type !== 'application/pdf') {
+            alert('Please select a PDF file');
+            return;
+        }
+
+        // Check file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+            alert('PDF size should be less than 10MB');
+            return;
+        }
+
+        // Convert to base64
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setSelectedPdf({
+                base64: reader.result as string,
+                name: file.name
+            });
+        };
+        reader.readAsDataURL(file);
+    };
+
+    const removePdf = () => {
+        setSelectedPdf(null);
+        if (pdfInputRef.current) {
+            pdfInputRef.current.value = '';
         }
     };
 
@@ -186,15 +249,33 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                                             className="max-w-xs rounded-lg mb-2"
                                         />
                                     )}
-                                    {msg.role === 'assistant' ? (
-                                        <div className="prose prose-invert prose-sm max-w-none prose-pre:bg-zinc-800 prose-pre:border prose-pre:border-zinc-700 prose-code:text-emerald-400 prose-code:bg-zinc-800/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-headings:text-zinc-100 prose-p:text-zinc-300 prose-strong:text-zinc-100 prose-ul:text-zinc-300 prose-ol:text-zinc-300 prose-li:text-zinc-300">
-                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                {typeof msg.content === 'string' ? msg.content :
-                                                    msg.content.find(c => c.type === 'text')?.text || ''}
-                                            </ReactMarkdown>
+                                    {msg.pdfData && (
+                                        <div className="flex items-center gap-2 p-3 bg-zinc-800/50 border border-zinc-700 rounded-lg mb-2 max-w-xs">
+                                            <FileText className="w-5 h-5 text-red-400" />
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-zinc-300 truncate">{msg.pdfData.fileName}</p>
+                                                <p className="text-xs text-zinc-500">{msg.pdfData.pages} pages</p>
+                                            </div>
                                         </div>
+                                    )}
+                                    {msg.role === 'assistant' ? (
+                                        <>
+                                            <div className="prose prose-invert prose-sm max-w-none prose-pre:bg-zinc-800 prose-pre:border prose-pre:border-zinc-700 prose-code:text-emerald-400 prose-code:bg-zinc-800/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-headings:text-zinc-100 prose-p:text-zinc-300 prose-strong:text-zinc-100 prose-ul:text-zinc-300 prose-ol:text-zinc-300 prose-li:text-zinc-300">
+                                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                    {typeof msg.content === 'string' ? msg.content :
+                                                        msg.content.find(c => c.type === 'text')?.text || ''}
+                                                </ReactMarkdown>
+                                            </div>
+                                            {msg.codePreview && (
+                                                <CodePreview
+                                                    html={msg.codePreview.html}
+                                                    css={msg.codePreview.css}
+                                                    js={msg.codePreview.js}
+                                                />
+                                            )}
+                                        </>
                                     ) : (
-                                        <span>
+                                        <span className="whitespace-pre-wrap">
                                             {typeof msg.content === 'string' ? msg.content :
                                                 msg.content.find(c => c.type === 'text')?.text || ''}
                                         </span>
@@ -219,31 +300,52 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                     onSubmit={handleSubmit}
                     className="max-w-4xl mx-auto relative group"
                 >
-                    {/* Image Preview */}
-                    {selectedImage && (
-                        <div className="mb-3 relative inline-block">
-                            <img
-                                src={selectedImage}
-                                alt="Preview"
-                                className="max-w-xs max-h-40 rounded-lg border border-zinc-700"
-                            />
-                            <button
-                                type="button"
-                                onClick={removeImage}
-                                className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        </div>
-                    )}
+                    {/* File Previews */}
+                    <div className="mb-3 flex flex-wrap gap-2">
+                        {selectedImage && (
+                            <div className="relative inline-block">
+                                <img
+                                    src={selectedImage}
+                                    alt="Preview"
+                                    className="max-w-xs max-h-40 rounded-lg border border-zinc-700"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={removeImage}
+                                    className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
+                        {selectedPdf && (
+                            <div className="relative inline-block">
+                                <div className="flex items-center gap-2 p-3 bg-zinc-800 border border-zinc-700 rounded-lg">
+                                    <FileText className="w-6 h-6 text-red-400" />
+                                    <div>
+                                        <p className="text-sm font-medium text-zinc-300">{selectedPdf.name}</p>
+                                        <p className="text-xs text-zinc-500">PDF Document</p>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={removePdf}
+                                    className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
+                    </div>
 
                     <div className="relative glass rounded-2xl border-zinc-700 focus-within:border-blue-500/50 transition-all shadow-2xl overflow-hidden">
                         <Textarea
-                            placeholder={`Ketik pesan untuk ${getModelDisplayName(currentModel)}...`}
+                            placeholder={`Ketik pesan`}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            className="w-full bg-transparent border-none focus-visible:ring-0 min-h-[60px] max-h-[200px] py-4 px-6 text-zinc-200 placeholder:text-zinc-600 resize-none"
+                            onPaste={handlePaste}
+                            className="w-full bg-transparent border-none focus-visible:ring-0 min-h-[60px] max-h-[200px] py-4 px-6 text-zinc-200 placeholder:text-zinc-600 resize-none whitespace-pre-wrap"
                         />
                         <div className="flex items-center justify-between px-4 pb-3">
                             <div className="flex items-center gap-2">
@@ -270,12 +372,31 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                                         </label>
                                     </>
                                 )}
+                                <input
+                                    ref={pdfInputRef}
+                                    type="file"
+                                    accept="application/pdf"
+                                    onChange={handlePdfSelect}
+                                    className="hidden"
+                                    id="pdf-upload"
+                                />
+                                <label htmlFor="pdf-upload">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="text-zinc-500 hover:text-zinc-300"
+                                        onClick={() => pdfInputRef.current?.click()}
+                                    >
+                                        <FileText className="w-5 h-5" />
+                                    </Button>
+                                </label>
                                 <span className="text-[10px] text-zinc-600 font-mono">SHIFT + ENTER UNTUK BARIS BARU</span>
                             </div>
                             <Button
                                 type="submit"
                                 size="icon"
-                                disabled={!input.trim() && !selectedImage}
+                                disabled={!input.trim() && !selectedImage && !selectedPdf}
                                 className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-900/20"
                             >
                                 <Send className="w-4 h-4" />

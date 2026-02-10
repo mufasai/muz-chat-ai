@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { ModelType } from '@/types/ai';
 import {
     Bot,
@@ -9,7 +10,8 @@ import {
     Settings,
     PanelLeftClose,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    Code2
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
@@ -58,6 +60,12 @@ export function Sidebar({ currentModel, onModelChange, isOpen, onToggle }: Sideb
                     <Plus className="w-4 h-4" />
                     Chat Baru
                 </Button>
+                <Link to="/builder">
+                    <Button className="w-full justify-start gap-2 mt-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white border-none">
+                        <Code2 className="w-4 h-4" />
+                        App Builder
+                    </Button>
+                </Link>
             </div>
 
             <div className="flex-1 overflow-y-auto px-2 space-y-6">
