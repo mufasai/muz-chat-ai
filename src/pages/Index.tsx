@@ -7,6 +7,7 @@ export default function Index() {
     const [currentModel, setCurrentModel] = useState<ModelType>('z-ai/glm-4.5-air:free');
     const [messages, setMessages] = useState<Message[]>([]);
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isLoading, setIsLoading] = useState(false);
 
     const MAX_MESSAGES = 50; // Limit maksimal pesan dalam satu chat
 
@@ -55,6 +56,9 @@ export default function Index() {
             return;
         }
 
+        // Set loading state
+        setIsLoading(true);
+
         // Extract PDF text if PDF is provided
         let pdfData: { text: string; pages: number; fileName: string } | undefined;
         if (pdfBase64 && pdfFileName) {
@@ -79,6 +83,7 @@ export default function Index() {
                     // Check if PDF has text
                     if (!data.text || data.text.trim().length === 0) {
                         alert('PDF tidak berisi text yang bisa dibaca. Mungkin PDF ini berupa scan/gambar. Coba PDF lain yang berisi text.');
+                        setIsLoading(false);
                         return;
                     }
 
@@ -86,11 +91,13 @@ export default function Index() {
                     console.log('PDF text preview:', data.text.substring(0, 200));
                 } else {
                     alert('Gagal membaca PDF. Coba lagi.');
+                    setIsLoading(false);
                     return;
                 }
             } catch (error) {
                 console.error('PDF extraction error:', error);
                 alert('Gagal membaca PDF. Coba lagi.');
+                setIsLoading(false);
                 return;
             }
         }
@@ -105,27 +112,8 @@ export default function Index() {
         };
         setMessages(prev => [...prev, userMsg]);
 
-        // Creating placeholder for AI response
+        // Store AI message ID for later updates
         const aiMsgId = Date.now() + 1;
-        const initialAiMsg: Message = {
-            id: aiMsgId,
-            role: 'assistant',
-            content: '',
-            model: currentModel,
-            timestamp: new Date()
-        };
-        setMessages(prev => [...prev, initialAiMsg]);
-
-        // Timeout warning for slow models
-        const timeoutWarning = setTimeout(() => {
-            setMessages(prev =>
-                prev.map(msg =>
-                    msg.id === aiMsgId && msg.content === ''
-                        ? { ...msg, content: '...' }
-                        : msg
-                )
-            );
-        }, 10000); // 10 detik
 
         try {
             // Check if this is HTML/CSS generation request
@@ -145,24 +133,22 @@ export default function Index() {
 
                 if (codeResponse.ok) {
                     const codeData = await codeResponse.json();
-                    clearTimeout(timeoutWarning);
+                    setIsLoading(false);
 
-                    // Update message with code preview
-                    setMessages(prev =>
-                        prev.map(msg =>
-                            msg.id === aiMsgId
-                                ? {
-                                    ...msg,
-                                    content: 'Saya sudah buatkan HTML/CSS untuk kamu! Lihat preview di bawah:',
-                                    codePreview: {
-                                        html: codeData.html || '',
-                                        css: codeData.css || '',
-                                        js: codeData.js || ''
-                                    }
-                                }
-                                : msg
-                        )
-                    );
+                    // Create AI message with code preview
+                    const aiMsg: Message = {
+                        id: aiMsgId,
+                        role: 'assistant',
+                        content: 'Saya sudah buatkan HTML/CSS untuk kamu! Lihat preview di bawah:',
+                        model: currentModel,
+                        timestamp: new Date(),
+                        codePreview: {
+                            html: codeData.html || '',
+                            css: codeData.css || '',
+                            js: codeData.js || ''
+                        }
+                    };
+                    setMessages(prev => [...prev, aiMsg]);
                     return; // Skip normal chat flow
                 }
             }
@@ -234,24 +220,24 @@ export default function Index() {
                 apiMessages as any
             );
 
-            // Clear timeout warning jika stream dimulai
-            let hasReceivedData = false;
-
             // Parse dan tampilkan streaming response
             let fullResponse = '';
+            let aiMessageCreated = false;
+
             for await (const textChunk of parseSSEStream(stream)) {
-                if (!hasReceivedData) {
-                    clearTimeout(timeoutWarning);
-                    hasReceivedData = true;
-                    // Clear warning message
-                    setMessages(prev =>
-                        prev.map(msg =>
-                            msg.id === aiMsgId
-                                ? { ...msg, content: textChunk }
-                                : msg
-                        )
-                    );
+                if (!aiMessageCreated) {
+                    // Create AI message on first chunk
+                    const aiMsg: Message = {
+                        id: aiMsgId,
+                        role: 'assistant',
+                        content: textChunk,
+                        model: currentModel,
+                        timestamp: new Date()
+                    };
+                    setMessages(prev => [...prev, aiMsg]);
+                    aiMessageCreated = true;
                 } else {
+                    // Update existing message
                     setMessages(prev =>
                         prev.map(msg =>
                             msg.id === aiMsgId
@@ -264,6 +250,9 @@ export default function Index() {
             }
 
             console.log('Stream completed');
+
+            // Clear loading state
+            setIsLoading(false);
 
             // After stream completes, check if response contains HTML/CSS code blocks
             if (isHtmlCssRequest(text) || fullResponse.includes('```html')) {
@@ -284,15 +273,18 @@ export default function Index() {
                 }
             }
         } catch (error) {
-            clearTimeout(timeoutWarning);
+            setIsLoading(false);
             console.error("AI Error:", error);
-            setMessages(prev =>
-                prev.map(msg =>
-                    msg.id === aiMsgId
-                        ? { ...msg, content: `Maaf, terjadi kesalahan: ${error instanceof Error ? error.message : 'Unknown error'}` }
-                        : msg
-                )
-            );
+
+            // Create error message
+            const errorMsg: Message = {
+                id: aiMsgId,
+                role: 'assistant',
+                content: `Maaf, terjadi kesalahan: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                model: currentModel,
+                timestamp: new Date()
+            };
+            setMessages(prev => [...prev, errorMsg]);
         }
     };
 
@@ -312,6 +304,7 @@ export default function Index() {
                     currentModel={currentModel}
                     isSidebarOpen={isSidebarOpen}
                     onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                    isLoading={isLoading}
                 />
             </main>
         </div>

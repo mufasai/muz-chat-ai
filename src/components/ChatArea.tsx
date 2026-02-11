@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { CodePreview } from './CodePreview';
+import { TypingIndicator } from './TypingIndicator';
 
 interface ChatAreaProps {
     messages: Message[];
@@ -14,9 +15,10 @@ interface ChatAreaProps {
     currentModel: ModelType;
     isSidebarOpen: boolean;
     onToggleSidebar: () => void;
+    isLoading: boolean;
 }
 
-export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen, onToggleSidebar }: ChatAreaProps) {
+export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen, onToggleSidebar, isLoading }: ChatAreaProps) {
     const [input, setInput] = useState('');
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [selectedPdf, setSelectedPdf] = useState<{ base64: string; name: string } | null>(null);
@@ -292,6 +294,9 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                         </div>
                     ))
                 )}
+
+                {/* Typing Indicator */}
+                {isLoading && <TypingIndicator />}
             </div>
 
             {/* Input Area */}
