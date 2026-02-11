@@ -67,24 +67,24 @@ export default function Builder() {
     return (
         <div className="h-screen flex flex-col bg-zinc-950">
             {/* Header */}
-            <header className="h-16 border-b border-zinc-800 flex items-center px-6 justify-between">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
-                        <Code2 className="w-6 h-6 text-white" />
+            <header className="h-14 sm:h-16 border-b border-zinc-800 flex items-center px-3 sm:px-6 justify-between">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shrink-0">
+                        <Code2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                     </div>
-                    <div>
-                        <h1 className="text-xl font-bold">AI App Builder</h1>
-                        <p className="text-xs text-zinc-500">Generate full React apps with AI</p>
+                    <div className="min-w-0">
+                        <h1 className="text-base sm:text-xl font-bold truncate">AI App Builder</h1>
+                        <p className="text-[10px] sm:text-xs text-zinc-500 truncate">Generate React apps</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
                     <select
                         value={selectedModel}
                         onChange={(e) => setSelectedModel(e.target.value as any)}
-                        className="px-3 py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-zinc-300"
+                        className="px-2 sm:px-3 py-1.5 sm:py-2 bg-zinc-900 border border-zinc-800 rounded-lg text-xs sm:text-sm text-zinc-300"
                     >
-                        <option value="deepseek/deepseek-chat">DeepSeek Chat (Fast)</option>
-                        <option value="openai/gpt-4o-mini">GPT-4o Mini (Better)</option>
+                        <option value="deepseek/deepseek-chat">DeepSeek</option>
+                        <option value="openai/gpt-4o-mini">GPT-4o</option>
                     </select>
                 </div>
             </header>
@@ -93,11 +93,11 @@ export default function Builder() {
             <div className="flex-1 flex overflow-hidden">
                 {/* Left: Prompt Input */}
                 {!generatedFiles ? (
-                    <div className="flex-1 flex items-center justify-center p-8">
-                        <div className="max-w-2xl w-full space-y-6">
+                    <div className="flex-1 flex items-center justify-center p-4 sm:p-8">
+                        <div className="max-w-2xl w-full space-y-4 sm:space-y-6">
                             <div className="text-center space-y-2">
-                                <Sparkles className="w-16 h-16 mx-auto text-blue-500" />
-                                <h2 className="text-3xl font-bold">Apa yang ingin kamu buat?</h2>
+                                <Sparkles className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-blue-500" />
+                                <h2 className="text-xl sm:text-3xl font-bold">Apa yang ingin kamu buat?</h2>
                                 <p className="text-zinc-400">Deskripsikan app yang kamu inginkan, AI akan generate full code untuk kamu</p>
                             </div>
 

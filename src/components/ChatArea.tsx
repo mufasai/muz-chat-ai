@@ -188,16 +188,17 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
     return (
         <div className="flex-1 flex flex-col h-full bg-zinc-950 relative">
             {/* Header Info */}
-            <header className="h-14 border-b border-zinc-800 flex items-center px-6 justify-between glass z-10">
-                <div className="flex items-center gap-2">
+            <header className="h-14 sm:h-16 border-b border-zinc-800 flex items-center px-3 sm:px-6 justify-between glass z-10">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
                     {!isSidebarOpen && (
-                        <Button variant="ghost" size="icon" onClick={onToggleSidebar} className="text-zinc-400 mr-2">
+                        <Button variant="ghost" size="icon" onClick={onToggleSidebar} className="text-zinc-400 shrink-0">
                             <PanelLeft className="w-5 h-5" />
                         </Button>
                     )}
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-sm font-medium text-zinc-300 uppercase tracking-widest">
-                        Active Model: <span className="text-white">{getModelDisplayName(currentModel)}</span>
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                    <span className="text-xs sm:text-sm font-medium text-zinc-300 uppercase tracking-widest truncate">
+                        <span className="hidden sm:inline">Active Model: </span>
+                        <span className="text-white">{getModelDisplayName(currentModel)}</span>
                     </span>
                 </div>
             </header>
@@ -208,14 +209,9 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                 className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scroll-smooth"
             >
                 {messages.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50">
-                        {/* <img
-                            // src="https://mgx-backend-cdn.metadl.com/generate/images/868536/2025-12-27/fb449132-f449-4d3b-8752-a526057b68f9.png"
-                            alt="Logo"
-                            className="w-20 h-20 grayscale"
-                        /> */}
-                        <h2 className="text-2xl font-bold">Apa yang bisa saya bantu hari ini?</h2>
-                        <p className="max-w-md text-zinc-400">
+                    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-50 px-4">
+                        <h2 className="text-xl sm:text-2xl font-bold">Apa yang bisa saya bantu hari ini?</h2>
+                        <p className="max-w-md text-sm sm:text-base text-zinc-400">
                             Pilih model di sidebar dan mulai percakapan. Saya bisa membantu menulis kode, merangkum teks, atau menjawab pertanyaan apapun.
                         </p>
                     </div>
@@ -224,22 +220,22 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                         <div
                             key={msg.id}
                             className={cn(
-                                "flex gap-4 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-2",
+                                "flex gap-2 sm:gap-4 max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-2",
                                 msg.role === 'user' ? "flex-row-reverse" : "flex-row"
                             )}
                         >
                             <div className={cn(
-                                "w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border border-zinc-700/50 shadow-lg",
+                                "w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center shrink-0 border border-zinc-700/50 shadow-lg",
                                 msg.role === 'user' ? "bg-blue-600 border-blue-500" : "bg-zinc-800"
                             )}>
-                                {msg.role === 'user' ? <User className="w-5 h-5" /> : <Sparkles className="w-5 h-5 text-blue-400" />}
+                                {msg.role === 'user' ? <User className="w-4 h-4 sm:w-5 sm:h-5" /> : <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />}
                             </div>
                             <div className={cn(
-                                "space-y-2 max-w-[85%]",
+                                "space-y-2 max-w-[85%] sm:max-w-[80%]",
                                 msg.role === 'user' ? "items-end text-right" : "items-start text-left"
                             )}>
                                 <div className={cn(
-                                    "p-4 rounded-2xl border leading-relaxed",
+                                    "p-3 sm:p-4 rounded-2xl border leading-relaxed text-sm sm:text-base",
                                     msg.role === 'user'
                                         ? "bg-blue-600/10 border-blue-600/20 text-zinc-100"
                                         : "bg-zinc-900/50 border-zinc-800 text-zinc-300"
@@ -350,10 +346,10 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
                             onPaste={handlePaste}
-                            className="w-full bg-transparent border-none focus-visible:ring-0 min-h-[60px] max-h-[200px] py-4 px-6 text-zinc-200 placeholder:text-zinc-600 resize-none whitespace-pre-wrap"
+                            className="w-full bg-transparent border-none focus-visible:ring-0 min-h-[50px] sm:min-h-[60px] max-h-[150px] sm:max-h-[200px] py-3 sm:py-4 px-4 sm:px-6 text-sm sm:text-base text-zinc-200 placeholder:text-zinc-600 resize-none whitespace-pre-wrap"
                         />
-                        <div className="flex items-center justify-between px-4 pb-3">
-                            <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-between px-3 sm:px-4 pb-2 sm:pb-3">
+                            <div className="flex items-center gap-1 sm:gap-2">
                                 {isVisionModel && (
                                     <>
                                         <input
@@ -390,26 +386,26 @@ export function ChatArea({ messages, onSendMessage, currentModel, isSidebarOpen,
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        className="text-zinc-500 hover:text-zinc-300"
+                                        className="text-zinc-500 hover:text-zinc-300 h-8 w-8 sm:h-10 sm:w-10"
                                         onClick={() => pdfInputRef.current?.click()}
                                     >
-                                        <FileText className="w-5 h-5" />
+                                        <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
                                     </Button>
                                 </label>
-                                <span className="text-[10px] text-zinc-600 font-mono">SHIFT + ENTER UNTUK BARIS BARU</span>
+                                <span className="hidden sm:inline text-[10px] text-zinc-600 font-mono">SHIFT + ENTER UNTUK BARIS BARU</span>
                             </div>
                             <Button
                                 type="submit"
                                 size="icon"
                                 disabled={!input.trim() && !selectedImage && !selectedPdf}
-                                className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-900/20"
+                                className="bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-900/20 h-9 w-9 sm:h-10 sm:w-10"
                             >
                                 <Send className="w-4 h-4" />
                             </Button>
                         </div>
                     </div>
                 </form>
-                <p className="text-center text-[10px] text-zinc-600 mt-3 uppercase tracking-tighter">
+                <p className="text-center text-[9px] sm:text-[10px] text-zinc-600 mt-2 sm:mt-3 uppercase tracking-tighter px-4">
                     AI Muz dapat membuat kesalahan. Pertimbangkan untuk memeriksa informasi penting.
                 </p>
             </div>
