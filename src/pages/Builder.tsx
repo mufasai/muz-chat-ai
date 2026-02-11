@@ -1,9 +1,25 @@
-import { useState } from 'react';
-import { Sandpack } from '@codesandbox/sandpack-react';
+import { useState, lazy, Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Sparkles, Download, Code2 } from 'lucide-react';
 import './builder.css';
+
+// Lazy load Sandpack (heavy library)
+const Sandpack = lazy(() =>
+    import('@codesandbox/sandpack-react').then(module => ({
+        default: module.Sandpack
+    }))
+);
+
+// Loading component for Sandpack
+const SandpackLoader = () => (
+    <div className="flex items-center justify-center h-[600px] bg-zinc-900 rounded-lg border border-zinc-800">
+        <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-4 border-red-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-zinc-400 text-sm">Loading code editor...</p>
+        </div>
+    </div>
+);
 
 export default function Builder() {
     const [prompt, setPrompt] = useState('');
@@ -136,27 +152,29 @@ export default function Builder() {
                 ) : (
                     /* Split View: Code + Preview - Full Height */
                     <div className="flex-1 overflow-hidden sandpack-container">
-                        <Sandpack
-                            template="react"
-                            theme="dark"
-                            files={generatedFiles}
-                            options={{
-                                showNavigator: true,
-                                showTabs: true,
-                                showLineNumbers: true,
-                                editorHeight: '100%',
-                                editorWidthPercentage: 50,
-                                showConsole: false,
-                                showConsoleButton: true,
-                                closableTabs: false,
-                            }}
-                            customSetup={{
-                                dependencies: {
-                                    'react': '^18.0.0',
-                                    'react-dom': '^18.0.0',
-                                }
-                            }}
-                        />
+                        <Suspense fallback={<SandpackLoader />}>
+                            <Sandpack
+                                template="react"
+                                theme="dark"
+                                files={generatedFiles}
+                                options={{
+                                    showNavigator: true,
+                                    showTabs: true,
+                                    showLineNumbers: true,
+                                    editorHeight: '100%',
+                                    editorWidthPercentage: 50,
+                                    showConsole: false,
+                                    showConsoleButton: true,
+                                    closableTabs: false,
+                                }}
+                                customSetup={{
+                                    dependencies: {
+                                        'react': '^18.0.0',
+                                        'react-dom': '^18.0.0',
+                                    }
+                                }}
+                            />
+                        </Suspense>
                     </div>
                 )}
             </div>
