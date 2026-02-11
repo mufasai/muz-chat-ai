@@ -19,6 +19,10 @@ dist-ssr
 # Server folder (separate repo)
 server/
 
+# Documentation files (exclude from git)
+*.md
+!README.md
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
