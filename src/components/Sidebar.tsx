@@ -1,13 +1,17 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { ModelType } from '@/types/ai';
 import {
     Bot,
     Cpu,
     Sparkles,
     Zap,
-    MessageSquare,
     Plus,
     Settings,
-    PanelLeftClose
+    PanelLeftClose,
+    ChevronDown,
+    ChevronUp,
+    Code2
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
@@ -20,13 +24,20 @@ interface SidebarProps {
 }
 
 const models = [
-    { id: 'gpt-4', name: 'GPT-4o', icon: Sparkles, color: 'text-emerald-500', desc: 'Most intelligent model' },
-    { id: 'claude-3', name: 'Claude 3.5', icon: Bot, color: 'text-orange-500', desc: 'Creative and nuanced' },
-    { id: 'gemini-pro', name: 'Gemini Pro', icon: Zap, color: 'text-blue-500', desc: 'Fast and versatile' },
-    { id: 'deepseek-v3', name: 'DeepSeek V3', icon: Cpu, color: 'text-purple-500', desc: 'Efficient reasoning' },
+    { id: 'z-ai/glm-4.5-air:free', name: 'GLM 4.5 Air', icon: Sparkles, color: 'text-purple-500', desc: 'Free - Lightweight' },
+    { id: 'deepseek/deepseek-r1-0528:free', name: 'DeepSeek R1', icon: Cpu, color: 'text-blue-500', desc: 'Free - Reasoning' },
+    { id: 'tngtech/tng-r1t-chimera:free', name: 'TNG R1T Chimera', icon: Zap, color: 'text-yellow-500', desc: 'Free - Creative' },
+    { id: 'deepseek/deepseek-chat', name: 'DeepSeek Chat', icon: Bot, color: 'text-cyan-500', desc: 'Fast & Stable' },
+    { id: 'qwen/qwen-2.5-vl-7b-instruct:free', name: 'Qwen 2.5 VL', icon: Sparkles, color: 'text-emerald-500', desc: 'Free - Vision 👁️ (Slow)' },
+    { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', icon: Sparkles, color: 'text-indigo-500', desc: 'Paid - Vision 👁️ (Fast)' },
 ] as const;
 
 export function Sidebar({ currentModel, onModelChange, isOpen, onToggle }: SidebarProps) {
+    const [showAllModels, setShowAllModels] = useState(false);
+
+    // Show only first 3 models by default
+    const visibleModels = showAllModels ? models : models.slice(0, 3);
+
     return (
         <aside className={cn(
             "h-full border-r border-zinc-800 bg-zinc-900 flex flex-col transition-all duration-300",
@@ -34,8 +45,8 @@ export function Sidebar({ currentModel, onModelChange, isOpen, onToggle }: Sideb
         )}>
             <div className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 text-white" />
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-zinc-800 to-zinc-900 border border-zinc-700 flex items-center justify-center shadow-lg">
+                        <span className="text-blue-400 font-bold text-lg">M</span>
                     </div>
                     <span className="font-bold text-lg tracking-tight">MUZ</span>
                 </div>
@@ -49,13 +60,19 @@ export function Sidebar({ currentModel, onModelChange, isOpen, onToggle }: Sideb
                     <Plus className="w-4 h-4" />
                     Chat Baru
                 </Button>
+                <Link to="/builder">
+                    <Button className="w-full justify-start gap-2 mt-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white border-none">
+                        <Code2 className="w-4 h-4" />
+                        App Builder
+                    </Button>
+                </Link>
             </div>
 
             <div className="flex-1 overflow-y-auto px-2 space-y-6">
                 <div>
                     <p className="px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Pilih Model AI</p>
                     <div className="space-y-1">
-                        {models.map((model) => (
+                        {visibleModels.map((model) => (
                             <button
                                 key={model.id}
                                 onClick={() => onModelChange(model.id as ModelType)}
@@ -73,19 +90,39 @@ export function Sidebar({ currentModel, onModelChange, isOpen, onToggle }: Sideb
                                 </div>
                             </button>
                         ))}
+
+                        {/* Show More / Show Less Button */}
+                        {models.length > 3 && (
+                            <button
+                                onClick={() => setShowAllModels(!showAllModels)}
+                                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-xs text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/50 rounded-lg transition-all mt-2"
+                            >
+                                {showAllModels ? (
+                                    <>
+                                        <ChevronUp className="w-4 h-4" />
+                                        Tampilkan Lebih Sedikit
+                                    </>
+                                ) : (
+                                    <>
+                                        <ChevronDown className="w-4 h-4" />
+                                        Tampilkan {models.length - 3} Model Lainnya
+                                    </>
+                                )}
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 <div>
                     <p className="px-3 text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Riwayat Chat</p>
-                    <div className="space-y-1">
+                    {/* <div className="space-y-1">
                         {[1, 2, 3].map((i) => (
                             <button key={i} className="w-full flex items-center gap-2 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 rounded-lg group text-left">
                                 <MessageSquare className="w-4 h-4 shrink-0" />
                                 <span className="truncate">Diskusi tentang React Architecture #{i}</span>
                             </button>
                         ))}
-                    </div>
+                    </div> */}
                 </div>
             </div>
 
