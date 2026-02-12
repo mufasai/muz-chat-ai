@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="100" height="100" rx="20" fill="url(#grad)"/>
+  
+  <!-- Aesthetic M with cut sections - centered -->
+  <g transform="translate(50, 50)">
+    <g transform="skewX(-15)">
+      <!-- Left vertical bar (cut at top) -->
+      <rect x="-30" y="-15" width="8" height="35" fill="white" rx="2"/>
+      
+      <!-- Left diagonal (cut) -->
+      <path d="M -22 -15 L -5 10 L 0 7 L -17 -18 Z" fill="white"/>
+      
+      <!-- Right diagonal (cut) -->
+      <path d="M 0 7 L 17 -18 L 22 -15 L 5 10 Z" fill="white"/>
+      
+      <!-- Right vertical bar (cut at top) -->
+      <rect x="22" y="-15" width="8" height="35" fill="white" rx="2"/>
+      
+      <!-- Cut effect - horizontal lines through the M -->
+      <rect x="-35" y="-2" width="70" height="3" fill="url(#grad)" opacity="0.8"/>
+      <rect x="-35" y="8" width="70" height="2" fill="url(#grad)" opacity="0.6"/>
+    </g>
+  </g>
+</svg>
